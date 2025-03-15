@@ -16,6 +16,7 @@
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/egulias/email-validator" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/fakerphp/faker" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/filp/whoops" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/firebase/php-jwt" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/fruitcake/php-cors" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/graham-campbell/result-type" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/guzzlehttp/guzzle" />
@@ -29,12 +30,14 @@
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/laravel/prompts" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/laravel/sail" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/laravel/serializable-closure" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/laravel/socialite" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/laravel/tinker" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/commonmark" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/config" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/flysystem" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/flysystem-local" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/mime-type-detection" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/oauth1-client" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/uri" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/league/uri-interfaces" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/mockery/mockery" />
@@ -46,9 +49,12 @@
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/nikic/php-parser" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/nunomaduro/collision" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/nunomaduro/termwind" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/paragonie/constant_time_encoding" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/paragonie/random_compat" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phar-io/manifest" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phar-io/version" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phpoption/phpoption" />
+      <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phpseclib/phpseclib" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phpunit/php-code-coverage" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phpunit/php-file-iterator" />
       <excludeFolder url="file://$MODULE_DIR$/crowdFlow/vendor/phpunit/php-invoker" />
