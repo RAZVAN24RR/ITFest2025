@@ -9,11 +9,11 @@ import numpy as np
 import tflite_runtime.interpreter as tflite
 
 # ---------------- Configuration ----------------
-MODEL_PATH = "models/efficientdet_lite0.tflite"
-MIN_CONFIDENCE = 0.5
-INPUT_SIZE = (320, 320)
-MATCH_THRESHOLD = 80
-DISPLAY_RESOLUTION = (640, 480)
+MODEL_PATH = "models/efficientdet_lite0.tflite"  # Path to the TFLite model
+MIN_CONFIDENCE = 0.5                              # Confidence threshold for detections
+INPUT_SIZE = (320, 320)                           # Model input size for inference
+MATCH_THRESHOLD = 80                              # Matching threshold (in pixels)
+DISPLAY_RESOLUTION = (640, 480)                   # Display resolution
 
 # ---------------- Initialize TFLite Interpreter ----------------
 interpreter = tflite.Interpreter(model_path=MODEL_PATH)
@@ -22,7 +22,7 @@ input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
 # ---------------- Define Labels ----------------
-labels = ["person"]
+labels = ["person"]  # "person" at index 0
 
 # ---------------- Initialize Picamera2 ----------------
 picam2 = Picamera2()
@@ -31,11 +31,11 @@ picam2.configure(config)
 picam2.start()
 
 # ---------------- Tracking and Counting Variables ----------------
-tracked_objects = {}
+tracked_objects = {}  # Stores tracked objects with keys: centroid, bbox, last_y, state, counted, lost
 next_object_id = 0
 counter = 0
 counter_lock = threading.Lock()
-script_dir = os.path.dirname(os.path.realpath(__file__))
+script_dir = os.path.dirname(os.path.realpath(__file__))  # Get script directory
 
 # ---------------- Frame Capture Thread ----------------
 frame_queue = queue.Queue(maxsize=1)
@@ -64,9 +64,9 @@ def write_counter_to_file():
         try:
             with open(file_path, "w") as f:
                 f.write(str(current_counter))
-                f.flush()
-                os.fsync(f.fileno())
-            print(f"Counter updated: {current_counter}")
+                f.flush()  # Force immediate write
+                os.fsync(f.fileno())  # Ensure write to disk
+            print(f"Counter updated: {current_counter}")  # Debug output
         except Exception as e:
             print(f"Error writing to file: {e}")
 
@@ -75,12 +75,12 @@ write_thread.start()
 
 # ---------------- Utility Functions ----------------
 def draw_lines(frame):
-    """Inverted line positions"""
+    """Draw two horizontal lines on the frame and return their y positions."""
     h, w, _ = frame.shape
-    bottom_line = int(h * 0.3) 
-    top_line = int(h * 0.4)    
-    cv2.line(frame, (0, top_line), (w, top_line), (255, 0, 0), 2)    
-    cv2.line(frame, (0, bottom_line), (w, bottom_line), (0, 0, 255), 2)  
+    top_line = int(h * 0.3)
+    bottom_line = int(h * 0.4)
+    cv2.line(frame, (0, top_line), (w, top_line), (255, 0, 0), 2)
+    cv2.line(frame, (0, bottom_line), (w, bottom_line), (0, 0, 255), 2)
     return top_line, bottom_line
 
 def update_tracking(detections, tracked_objects):
@@ -88,6 +88,7 @@ def update_tracking(detections, tracked_objects):
     new_tracked = {}
     used_detections = set()
     
+    # Existing object matching
     for obj_id, obj in tracked_objects.items():
         best_match = None
         best_distance = float('inf')
@@ -114,6 +115,7 @@ def update_tracking(detections, tracked_objects):
             if obj["lost"] < 5:
                 new_tracked[obj_id] = obj
                 
+    # Add new detections
     for i, det in enumerate(detections):
         if i not in used_detections:
             new_tracked[next_object_id] = {
@@ -141,11 +143,11 @@ def check_crossings(tracked_objects, top_line, bottom_line):
             if not obj["counted"]:
                 if obj["state"] == "top_crossed" and current_y >= bottom_line:
                     with counter_lock:
-                        counter += 1
+                        counter -= 1  # Decrements for top-to-bottom crossing
                     obj["counted"] = True
                 elif obj["state"] == "bottom_crossed" and current_y <= top_line:
                     with counter_lock:
-                        counter -= 1
+                        counter += 1  # Increments for bottom-to-top crossing
                     obj["counted"] = True
 
 def draw_tracked_objects(frame, tracked_objects):
@@ -165,12 +167,14 @@ try:
         display_frame = frame.copy()
         top_line, bottom_line = draw_lines(display_frame)
 
+        # Inference processing
         img_resized = cv2.resize(frame, INPUT_SIZE)
         input_data = np.expand_dims(img_resized.astype(np.uint8), axis=0)
         
         interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
 
+        # Process detections
         boxes = interpreter.get_tensor(output_details[0]['index'])[0]
         classes = interpreter.get_tensor(output_details[1]['index'])[0]
         scores = interpreter.get_tensor(output_details[2]['index'])[0]
@@ -194,12 +198,14 @@ try:
                 cv2.putText(display_frame, label_text, (left, top_coord - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+        # Update tracking and counts
         tracked_objects = update_tracking(detections, tracked_objects)
         check_crossings(tracked_objects, top_line, bottom_line)
         for obj in tracked_objects.values():
             obj["last_y"] = obj["centroid"][1]
         draw_tracked_objects(display_frame, tracked_objects)
 
+        # Display counter
         cv2.putText(display_frame, f"Count: {counter}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
         cv2.imshow("Human Detection and Counting", display_frame)
