@@ -26,7 +26,6 @@ labels = ["person"]  # "person" at index 0
 # ---------------- Initialize Picamera2 ----------------
 picam2 = Picamera2()
 # Configure the camera to output a resolution that can be run at high frame rate.
-# Note: Consult your camera?s datasheet?sometimes a lower resolution yields higher FPS.
 config = picam2.create_video_configuration(main={"size": DISPLAY_RESOLUTION, "format": "RGB888"})
 picam2.configure(config)
 picam2.start()
@@ -57,8 +56,8 @@ capture_thread.start()
 def draw_lines(frame):
     """Draw two horizontal lines on the frame and return their y positions."""
     h, w, _ = frame.shape
-    top_line = int(h * 0.3)
-    bottom_line = int(h * 0.7)
+    top_line = int(h * 0.6)
+    bottom_line = int(h * 0.8)
     cv2.line(frame, (0, top_line), (w, top_line), (255, 0, 0), 2)    # Blue top line
     cv2.line(frame, (0, bottom_line), (w, bottom_line), (0, 0, 255), 2)  # Red bottom line
     return top_line, bottom_line
