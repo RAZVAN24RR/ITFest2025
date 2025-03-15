@@ -1,3 +1,4 @@
+@vite('resources/css/app.css')
 <section class="py-12 bg-white sm:py-16 lg:py-20 xl:py-20">
     <div class="px-4 mx-auto sm:px-6 lg:px-8 max-w-7xl">
         <div class="grid items-center grid-cols-1 gap-y-12 lg:grid-cols-2 lg:gap-x-16 xl:gap-x-24">
