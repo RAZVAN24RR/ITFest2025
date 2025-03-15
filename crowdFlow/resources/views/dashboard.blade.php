@@ -1,202 +1,248 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard | CrowdFlow</title>
+
+    <!-- Tailwind CSS CDN (for quick prototyping) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Style for the map container -->
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+
+    <!-- jQuery (needed for dynamic content update) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- Bootstrap (optional, for styling leaflet plugins) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Leaflet Awesome Markers Plugin -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+
+    <!-- Font Awesome (for icons) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css" />
 </head>
 <body class="bg-gray-100">
 
-<!DOCTYPE html>
-<html lang="ro">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CrowdFlow Dashboard</title>
-    <!-- Tailwind CSS CDN (for quick prototyping) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50">
-
-<!-- Top Navigation Bar -->
+<!-- Top Navigation -->
 <nav class="bg-white shadow fixed top-0 inset-x-0 z-50">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex justify-between items-center py-4">
-            <!-- Left side: Brand and Title -->
             <div class="flex items-center space-x-4">
                 <span class="text-2xl font-bold text-gray-800">CrowdFlow</span>
-
             </div>
-            <!-- Right side: User welcome and Logout -->
             <div class="flex items-center space-x-4">
-          <span class="hidden sm:block text-gray-700">
-            Welcome, {{ Auth::user()->name }}!
-          </span>
-                <a href="{{ route('logout') }}" class="text-red-500 hover:text-red-700 font-medium">
-                    Logout
-                </a>
+                <span class="hidden sm:block text-gray-700">Welcome, {{ Auth::user()->name }}!</span>
+                <a href="{{ route('logout') }}" class="text-red-500 hover:text-red-700 font-medium">Logout</a>
             </div>
         </div>
     </div>
 </nav>
 
-<!-- Main Content (shifted down due to fixed nav height) -->
+<!-- Main Content -->
 <div class="pt-20">
     <div class="container mx-auto p-8">
-        <div class="bg-white shadow rounded-lg p-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">Dashboard</h1><p class="text-gray-600">
-                This is the CrowdFlow application’s control panel, where you can monitor in real time the crowd levels at various locations.
+        <div class="bg-white shadow rounded-lg p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Dashboard</h1>
+            <p class="text-gray-600">
+                This is the CrowdFlow control panel, where you can monitor crowd levels in real time at various locations.
             </p>
-            <!-- Additional components can be added here -->
+        </div>
+
+        <!-- Leaflet Map Section -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Location: Iulius UBC 0 Haufe Group!</h2>
+            <div id="map"></div>
+            <!-- Info Section: Ascuns inițial, se afișează la click -->
+            <div id="info-section" class="mt-4 p-6 bg-gray-50 shadow rounded-lg" style="display:none;">
+                <p id="info-content" class="text-gray-800"></p>
+            </div>
         </div>
     </div>
 </div>
 
-</body>
-</html>
-<section class="py-12 bg-white sm:py-16 lg:py-20 xl:py-20">
-    <div class="px-4 mx-auto sm:px-6 lg:px-8 max-w-7xl">
-        <div class="grid items-center grid-cols-1 gap-y-12 lg:grid-cols-2 lg:gap-x-16 xl:gap-x-24">
-
-        </div>
-    </div>
-</section>
-<section class="py-10 bg-gray-900 sm:pt-16 lg:pt-24">
-    <div class="px-4 mx-auto sm:px-6 lg:px-8 max-w-7xl">
+<!-- Footer -->
+<footer class="bg-gray-900 text-white py-10">
+    <div class="container mx-auto px-4">
         <div class="grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-4 md:gap-x-12">
             <div>
-                <p class="text-base text-gray-500">Company</p>
-
+                <p class="text-base text-gray-400">Company</p>
                 <ul class="mt-8 space-y-4">
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> About </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Features </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Works </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Career </a>
-                    </li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">About</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Features</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Works</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Career</a></li>
                 </ul>
             </div>
-
             <div>
-                <p class="text-base text-gray-500">Help</p>
-
+                <p class="text-base text-gray-400">Help</p>
                 <ul class="mt-8 space-y-4">
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Customer Support </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Delivery Details </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Terms & Conditions </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Privacy Policy </a>
-                    </li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Customer Support</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Delivery Details</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Terms &amp; Conditions</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Privacy Policy</a></li>
                 </ul>
             </div>
-
             <div>
-                <p class="text-base text-gray-500">Resources</p>
-
+                <p class="text-base text-gray-400">Resources</p>
                 <ul class="mt-8 space-y-4">
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Free eBooks </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Development Tutorial </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> How to - Blog </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> YouTube Playlist </a>
-                    </li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Free eBooks</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Development Tutorial</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">How-to - Blog</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">YouTube Playlist</a></li>
                 </ul>
             </div>
-
             <div>
-                <p class="text-base text-gray-500">Extra Links</p>
-
+                <p class="text-base text-gray-400">Extra Links</p>
                 <ul class="mt-8 space-y-4">
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Customer Support </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Delivery Details </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Terms & Conditions </a>
-                    </li>
-                    <li>
-                        <a href="#" title="" class="text-base text-white transition-all duration-200 hover:text-opacity-80 focus:text-opacity-80"> Privacy Policy </a>
-                    </li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Customer Support</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Delivery Details</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Terms &amp; Conditions</a></li>
+                    <li><a href="#" class="text-base text-white hover:opacity-80">Privacy Policy</a></li>
                 </ul>
             </div>
         </div>
-
-        <hr class="mt-16 mb-10 border-gray-800" />
-
-        <div class="flex flex-wrap items-center justify-between">
-            <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                CrowdFlow
-            </h2>
-
-            <ul class="flex items-center space-x-3 md:order-3">
-                <li>
-                    <a href="#" title="" class="flex items-center justify-center text-white transition-all duration-200 bg-transparent border border-gray-700 rounded-full w-7 h-7 focus:bg-blue-600 hover:bg-blue-600 hover:border-blue-600 focus:border-blue-600">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M19.633 7.997c.013.175.013.349.013.523 0 5.325-4.053 11.461-11.46 11.461-2.282 0-4.402-.661-6.186-1.809.324.037.636.05.973.05a8.07 8.07 0 0 0 5.001-1.721 4.036 4.036 0 0 1-3.767-2.793c.249.037.499.062.761.062.361 0 .724-.05 1.061-.137a4.027 4.027 0 0 1-3.23-3.953v-.05c.537.299 1.16.486 1.82.511a4.022 4.022 0 0 1-1.796-3.354c0-.748.199-1.434.548-2.032a11.457 11.457 0 0 0 8.306 4.215c-.062-.3-.1-.611-.1-.923a4.026 4.026 0 0 1 4.028-4.028c1.16 0 2.207.486 2.943 1.272a7.957 7.957 0 0 0 2.556-.973 4.02 4.02 0 0 1-1.771 2.22 8.073 8.073 0 0 0 2.319-.624 8.645 8.645 0 0 1-2.019 2.083z"
-                            ></path>
-                        </svg>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#" title="" class="flex items-center justify-center text-white transition-all duration-200 bg-transparent border border-gray-700 rounded-full w-7 h-7 focus:bg-blue-600 hover:bg-blue-600 hover:border-blue-600 focus:border-blue-600">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0 0 14.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z"></path>
-                        </svg>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#" title="" class="flex items-center justify-center text-white transition-all duration-200 bg-transparent border border-gray-700 rounded-full w-7 h-7 focus:bg-blue-600 hover:bg-blue-600 hover:border-blue-600 focus:border-blue-600">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M11.999 7.377a4.623 4.623 0 1 0 0 9.248 4.623 4.623 0 0 0 0-9.248zm0 7.627a3.004 3.004 0 1 1 0-6.008 3.004 3.004 0 0 1 0 6.008z"></path>
-                            <circle cx="16.806" cy="7.207" r="1.078"></circle>
-                            <path
-                                d="M20.533 6.111A4.605 4.605 0 0 0 17.9 3.479a6.606 6.606 0 0 0-2.186-.42c-.963-.042-1.268-.054-3.71-.054s-2.755 0-3.71.054a6.554 6.554 0 0 0-2.184.42 4.6 4.6 0 0 0-2.633 2.632 6.585 6.585 0 0 0-.419 2.186c-.043.962-.056 1.267-.056 3.71 0 2.442 0 2.753.056 3.71.015.748.156 1.486.419 2.187a4.61 4.61 0 0 0 2.634 2.632 6.584 6.584 0 0 0 2.185.45c.963.042 1.268.055 3.71.055s2.755 0 3.71-.055a6.615 6.615 0 0 0 2.186-.419 4.613 4.613 0 0 0 2.633-2.633c.263-.7.404-1.438.419-2.186.043-.962.056-1.267.056-3.71s0-2.753-.056-3.71a6.581 6.581 0 0 0-.421-2.217zm-1.218 9.532a5.043 5.043 0 0 1-.311 1.688 2.987 2.987 0 0 1-1.712 1.711 4.985 4.985 0 0 1-1.67.311c-.95.044-1.218.055-3.654.055-2.438 0-2.687 0-3.655-.055a4.96 4.96 0 0 1-1.669-.311 2.985 2.985 0 0 1-1.719-1.711 5.08 5.08 0 0 1-.311-1.669c-.043-.95-.053-1.218-.053-3.654 0-2.437 0-2.686.053-3.655a5.038 5.038 0 0 1 .311-1.687c.305-.789.93-1.41 1.719-1.712a5.01 5.01 0 0 1 1.669-.311c.951-.043 1.218-.055 3.655-.055s2.687 0 3.654.055a4.96 4.96 0 0 1 1.67.311 2.991 2.991 0 0 1 1.712 1.712 5.08 5.08 0 0 1 .311 1.669c.043.951.054 1.218.054 3.655 0 2.436 0 2.698-.043 3.654h-.011z"
-                            ></path>
-                        </svg>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#" title="" class="flex items-center justify-center text-white transition-all duration-200 bg-transparent border border-gray-700 rounded-full w-7 h-7 focus:bg-blue-600 hover:bg-blue-600 hover:border-blue-600 focus:border-blue-600">
-                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                fill-rule="evenodd"
-                                clip-rule="evenodd"
-                                d="M12.026 2c-5.509 0-9.974 4.465-9.974 9.974 0 4.406 2.857 8.145 6.821 9.465.499.09.679-.217.679-.481 0-.237-.008-.865-.011-1.696-2.775.602-3.361-1.338-3.361-1.338-.452-1.152-1.107-1.459-1.107-1.459-.905-.619.069-.605.069-.605 1.002.07 1.527 1.028 1.527 1.028.89 1.524 2.336 1.084 2.902.829.091-.645.351-1.085.635-1.334-2.214-.251-4.542-1.107-4.542-4.93 0-1.087.389-1.979 1.024-2.675-.101-.253-.446-1.268.099-2.64 0 0 .837-.269 2.742 1.021a9.582 9.582 0 0 1 2.496-.336 9.554 9.554 0 0 1 2.496.336c1.906-1.291 2.742-1.021 2.742-1.021.545 1.372.203 2.387.099 2.64.64.696 1.024 1.587 1.024 2.675 0 3.833-2.33 4.675-4.552 4.922.355.308.675.916.675 1.846 0 1.334-.012 2.41-.012 2.737 0 .267.178.577.687.479C19.146 20.115 22 16.379 22 11.974 22 6.465 17.535 2 12.026 2z"
-                            ></path>
-                        </svg>
-                    </a>
-                </li>
-            </ul>
-
-            <p class="w-full mt-8 text-sm text-center text-gray-100 md:mt-0 md:w-auto md:order-2">© Copyright 2025, All Rights Reserved by CrowdFlow</p>
+        <hr class="mt-16 border-gray-800" />
+        <div class="flex flex-wrap items-center justify-between mt-8">
+            <h2 class="text-3xl font-semibold tracking-tight">CrowdFlow</h2>
+            <p class="text-sm">© Copyright 2025, All Rights Reserved by CrowdFlow</p>
         </div>
     </div>
-</section>
+</footer>
 
+<!-- Leaflet Map Initialization with Custom Marker Colors and Info Section Update -->
+<script>
+    // Inițializare harta în elementul "map"
+    var map = L.map("map", {
+        center: [45.753959, 21.225967],
+        zoom: 14,
+        zoomControl: true,
+        preferCanvas: false,
+        crs: L.CRS.EPSG3857
+    });
+
+    // Adăugare strat de plăcuțe de la CARTO (temă light)
+    var tile_layer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        minZoom: 0,
+        maxZoom: 20,
+        maxNativeZoom: 20,
+        noWrap: false,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: "abcd",
+        detectRetina: false,
+        tms: false,
+        opacity: 1
+    });
+    tile_layer.addTo(map);
+
+    /**
+     * Funcție helper pentru adăugarea unui marker folosind AwesomeMarkers.
+     * Parametrul suplimentar mongoId (opțional) este folosit pentru a face o cerere AJAX
+     * la endpoint-ul backend-ului pentru a prelua detalii din MongoDB.
+     *
+     * @param {Array} coords - [lat, lng]
+     * @param {String} infoText - Textul informativ pentru secțiunea de sub hartă
+     * @param {String} tooltipText - Numele locației, afișat permanent deasupra markerului
+     * @param {String} statusColor - Culoarea markerului (ex.: "red", "yellow", "orange", "green")
+     * @param {String|null} mongoId - (Opțional) Id-ul folosit pentru preluarea datelor din MongoDB
+     */
+    function addMarker(coords, infoText, tooltipText, statusColor, mongoId = null) {
+        var awesomeIcon = L.AwesomeMarkers.icon({
+            markerColor: statusColor,
+            iconColor: "white",
+            icon: "info-sign",
+            prefix: "glyphicon",
+            extraClasses: "fa-rotate-0"
+        });
+        var marker = L.marker(coords, { icon: awesomeIcon }).addTo(map);
+
+        // Tooltip permanent, poziționat deasupra markerului
+        marker.bindTooltip("<div>" + tooltipText + "</div>", {
+            permanent: true,
+            direction: "top",
+            offset: [0, -20]
+        });
+
+        // La click, dacă mongoId este specificat, se face o cerere AJAX către API,
+        // altfel se afișează textul static și nivelul de aglomerație.
+        marker.on("click", function() {
+            if (mongoId) {
+                $.ajax({
+                    url: '/locations/' + mongoId,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        // Răspunsul de la MongoDB se așteaptă sub forma:
+                        // { "_id": "...", "capacity": 54, "count": 10 }
+                        var content = "<h3>" + tooltipText + "</h3>" +
+                            "<p><strong>ID:</strong> " + data._id + "</p>" +
+                            "<p><strong>Capacitate:</strong> " + data.capacity + "</p>" +
+                            "<p><strong>Număr curent:</strong> " + data.count + "</p>";
+                        $("#info-content").html(content);
+                        $("#info-section").show();
+                    },
+                    error: function(err) {
+                        console.error("Eroare la preluarea datelor:", err);
+                        $("#info-content").html("Nu s-au putut prelua datele din MongoDB.");
+                        $("#info-section").show();
+                    }
+                });
+            } else {
+                var statusDesc = "";
+                if (statusColor === "green") {
+                    statusDesc = "Verde - nu este aglomerat";
+                } else if (statusColor === "yellow") {
+                    statusDesc = "Galben - puțin aglomerat";
+                } else if (statusColor === "orange") {
+                    statusDesc = "Portocaliu - aglomerat";
+                } else if (statusColor === "red") {
+                    statusDesc = "Roșu - Foarte aglomerat";
+                }
+                var levelHTML = "<div style='margin-top:5px;'><strong>Nivel Aglomeratie:</strong> " +
+                    "<span style='display:inline-block; width:15px; height:15px; background-color:" + statusColor +
+                    "; margin:0 5px; vertical-align:middle;'></span>" + statusDesc + "</div>";
+                var content = infoText + levelHTML;
+                $("#info-content").html(content);
+                $("#info-section").show();
+            }
+        });
+        return marker;
+    }
+
+    // Adăugare marker pentru "Haufe Group" cu id-ul MongoDB hardcodat
+    addMarker(
+        [45.765629, 21.230695],
+        "Informații despre Haufe Group.",
+        "Haufe Group",
+        "red",
+        "67d56cc288ff8426b0a9d87e"
+    );
+
+    // Adăugare markeri pentru celelalte locații (fără AJAX specific)
+    addMarker([45.74895, 21.23951], "Informații despre GymOne 3.", "GymOne 3", "green");
+    addMarker([45.707757, 21.232807], "Informații despre Lidl.", "Lidl", "yellow");
+    addMarker([45.753986, 21.249482], "Informații despre Curtea Berarilor La Fabrica.", "Curtea Berarilor La Fabrica", "orange");
+    addMarker([45.757099, 21.227967], "Informații despre Jack's Bistro.", "Jack's Bistro", "red");
+    addMarker([45.73716, 21.24157], "Informații despre Spitalul Clinic Județean de Urgență.", "Spitalul Clinic Județean de Urgență", "green");
+    addMarker([45.755422, 21.233204], "Informații despre Hotel Continental.", "Hotel Continental", "orange");
+    addMarker([45.73716, 21.219815], "Informații despre Kaufland.", "Kaufland", "green");
+    addMarker([45.766586, 21.236062], "Informații despre Dedeman.", "Dedeman", "yellow");
+    addMarker([45.755225, 21.227778], "Informații despre La Focacceria.", "La Focaccerias", "orange");
+    addMarker([45.757842, 21.229859], "Informații despre Pepper - Steak & Shake.", "Pepper - Steak & Shake", "red");
+    addMarker([45.754119, 21.225484], "Informații despre Starbucks.", "Starbucks", "green");
+</script>
 </body>
 </html>

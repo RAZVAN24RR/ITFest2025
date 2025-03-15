@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\LocationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,7 +19,9 @@ Route::get('/login', function() {
     return view('auth.login');
 })->name('login');
 
-Route::get('/logout', function () {
+Route::post('/logout', function () {
     Auth::logout();
     return redirect('/');
 })->name('logout');
+
+Route::get('/locations/{id}', [LocationController::class, 'show']);

@@ -112,6 +112,20 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // Configurația pentru MongoDB (folosită de pachetul jenssegers/mongodb)
+        'mongodb' => [
+            'driver'   => 'mongodb',
+            'host'     => env('MONGO_DB_HOST'),
+            'port'     => env('MONGO_DB_PORT'),
+            'dsn' => env('MONGODB_URI'),
+            'database' => env('MONGO_DB_DATABASE'),
+            'username' => env('MONGO_DB_USERNAME'),
+            'password' => env('MONGO_DB_PASSWORD'),
+            'options'  => [
+                'database' => env('MONGO_DB_AUTHENTICATION_DATABASE') // opțional, în funcție de configurațiile serverului
+            ],
+        ],
+
     ],
 
     /*
