@@ -1,120 +1,196 @@
+from picamera2 import Picamera2
 import cv2
 import numpy as np
 import tflite_runtime.interpreter as tflite
 
-# Configuration
-MODEL_PATH = "models/efficientdet_lite0.tflite"  # Human detection model
-LABELS_PATH = "labels.txt"  # Class labels
-MIN_CONFIDENCE = 0.5
-LINE_POSITIONS = (0.3, 0.7)  # Relative Y positions for entry/exit lines
+# ---------------- Configuration ----------------
+MODEL_PATH = "models/efficientdet_lite0.tflite"  # Path to the TFLite model
+MIN_CONFIDENCE = 0.5                              # Confidence threshold for detections
+INPUT_SIZE = (320, 320)                           # Model input size
+MATCH_THRESHOLD = 80                              # Increased matching threshold (in pixels)
 
-# Initialize TFLite
+# ---------------- Initialize TFLite Interpreter ----------------
 interpreter = tflite.Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Load labels
-with open(LABELS_PATH, 'r') as f:
-    labels = [line.strip() for line in f.readlines()]
+# ---------------- Define Labels ----------------
+# Manually define the label list to ensure "person" is at index 0.
+labels = ["person"]
 
-# Camera setup
-cap = cv2.VideoCapture(0)
-cap.set(3, 640)
-cap.set(4, 480)
+# ---------------- Initialize Picamera2 ----------------
+picam2 = Picamera2()
+config = picam2.create_video_configuration(
+    main={"size": (640, 480), "format": "RGB888"}
+)
+picam2.configure(config)
+picam2.start()
 
-# Tracking variables
+# ---------------- Tracking and Counting Variables ----------------
+# Each tracked object is stored as:
+# "centroid": (x,y), "bbox": (left, top, right, bottom),
+# "last_y": previous y position, "state": None/"top_crossed"/"bottom_crossed",
+# "counted": whether the crossing event was registered, "lost": frames missed.
 tracked_objects = {}
-entry_count = 0
-exit_count = 0
+next_object_id = 0
+counter = 0
 
+# ---------------- Utility Functions ----------------
 def draw_lines(frame):
-    h, w = frame.shape[:2]
-    entry_line = int(h * LINE_POSITIONS[0])
-    exit_line = int(h * LINE_POSITIONS[1])
-    cv2.line(frame, (0, entry_line), (w, entry_line), (0, 255, 0), 2)
-    cv2.line(frame, (0, exit_line), (w, exit_line), (0, 0, 255), 2)
-    return entry_line, exit_line
+    """Draw two horizontal lines and return their y positions."""
+    h, w, _ = frame.shape
+    top_line = int(h * 0.3)
+    bottom_line = int(h * 0.7)
+    cv2.line(frame, (0, top_line), (w, top_line), (255, 0, 0), 2)    # Blue top line
+    cv2.line(frame, (0, bottom_line), (w, bottom_line), (0, 0, 255), 2)  # Red bottom line
+    return top_line, bottom_line
 
-def update_tracking(centroids):
-    global tracked_objects
-    updated_objects = {}
-    for obj_id, centroid in enumerate(centroids):
-        min_dist = float('inf')
-        matched_key = None
-        for key, value in tracked_objects.items():
-            dist = np.linalg.norm(np.array(value) - np.array(centroid))
-            if dist < min_dist:
-                min_dist = dist
-                matched_key = key
-        if matched_key is not None and min_dist < 50:
-            updated_objects[matched_key] = centroid
+def update_tracking(detections, tracked_objects):
+    """
+    Update tracked objects using simple nearest neighbor matching.
+    Each detection is a dict with keys "centroid" and "bbox".
+    """
+    global next_object_id
+    new_tracked = {}
+    used_detections = set()
+    # Update existing objects
+    for obj_id, obj in tracked_objects.items():
+        best_match = None
+        best_distance = float('inf')
+        for i, det in enumerate(detections):
+            if i in used_detections:
+                continue
+            dist = np.linalg.norm(np.array(obj["centroid"]) - np.array(det["centroid"]))
+            if dist < best_distance:
+                best_distance = dist
+                best_match = i
+        if best_match is not None and best_distance < MATCH_THRESHOLD:
+            det = detections[best_match]
+            new_tracked[obj_id] = {
+                "centroid": det["centroid"],
+                "bbox": det["bbox"],
+                "last_y": obj["centroid"][1],  # Use previous frame's centroid for comparison
+                "state": obj["state"],
+                "counted": obj["counted"],
+                "lost": 0
+            }
+            used_detections.add(best_match)
         else:
-            updated_objects[len(tracked_objects)] = centroid
-    tracked_objects = updated_objects
+            obj["lost"] += 1
+            if obj["lost"] < 5:
+                new_tracked[obj_id] = obj
+    # Add new detections as new tracked objects
+    for i, det in enumerate(detections):
+        if i not in used_detections:
+            new_tracked[next_object_id] = {
+                "centroid": det["centroid"],
+                "bbox": det["bbox"],
+                "last_y": det["centroid"][1],
+                "state": None,
+                "counted": False,
+                "lost": 0
+            }
+            next_object_id += 1
+    return new_tracked
 
-def check_crossing(prev_pos, curr_pos, entry_line, exit_line):
-    global entry_count, exit_count
-    for obj_id, pos in curr_pos.items():
-        if obj_id not in prev_pos:
-            continue
-        prev_y = prev_pos[obj_id][1]
-        curr_y = pos[1]
-        
-        # Check entry line crossing (from top to bottom)
-        if prev_y < entry_line and curr_y > entry_line:
-            entry_count += 1
-        # Check exit line crossing (from bottom to top)
-        elif prev_y > exit_line and curr_y < exit_line:
-            exit_count += 1
+def check_crossings(tracked_objects, top_line, bottom_line):
+    """
+    Check each tracked object's vertical movement relative to the lines.
+    If an object that first crosses the top line later crosses the bottom line,
+    increment the counter. If it first crosses the bottom line then crosses the top line,
+    decrement the counter.
+    """
+    global counter
+    for obj in tracked_objects.values():
+        current_y = obj["centroid"][1]
+        last_y = obj["last_y"]
+        if obj["state"] is None:
+            # Check if moving downward and crosses the top line
+            if last_y < top_line and current_y >= top_line:
+                obj["state"] = "top_crossed"
+            # Check if moving upward and crosses the bottom line
+            elif last_y > bottom_line and current_y <= bottom_line:
+                obj["state"] = "bottom_crossed"
+        else:
+            if not obj["counted"]:
+                if obj["state"] == "top_crossed" and current_y >= bottom_line:
+                    counter += 1
+                    obj["counted"] = True
+                elif obj["state"] == "bottom_crossed" and current_y <= top_line:
+                    counter -= 1
+                    obj["counted"] = True
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+def draw_tracked_objects(frame, tracked_objects):
+    """Optionally draw tracking IDs on the frame."""
+    for obj_id, obj in tracked_objects.items():
+        left, top_coord, right, bottom = obj["bbox"]
+        cv2.putText(frame, f"ID {obj_id}", (left, top_coord - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    # Draw lines and get their positions
-    entry_line, exit_line = draw_lines(frame)
-    
-    # Run inference
-    img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img_resized = cv2.resize(img_rgb, (320, 320))
-    input_data = np.expand_dims(img_resized, axis=0)
-    
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-    interpreter.invoke()
-    
-    # Process detections
-    boxes = interpreter.get_tensor(output_details[0]['index'])[0]
-    classes = interpreter.get_tensor(output_details[1]['index'])[0]
-    scores = interpreter.get_tensor(output_details[2]['index'])[0]
-    
-    centroids = []
-    h, w = frame.shape[:2]
-    
-    for i in range(len(scores)):
-        if scores[i] > MIN_CONFIDENCE and labels[int(classes[i])] == 'person':
-            ymin, xmin, ymax, xmax = boxes[i]
-            x_center = int((xmin + xmax) * w / 2)
-            y_center = int((ymin + ymax) * h / 2)
-            centroids.append((x_center, y_center))
-            cv2.circle(frame, (x_center, y_center), 5, (255, 0, 0), -1)
+# ---------------- Main Loop ----------------
+try:
+    while True:
+        # Capture frame from camera
+        frame = picam2.capture_array()
+        h, w, _ = frame.shape
 
-    # Update tracking and check crossings
-    prev_positions = tracked_objects.copy()
-    update_tracking(centroids)
-    check_crossing(prev_positions, tracked_objects, entry_line, exit_line)
-    
-    # Display counts
-    cv2.putText(frame, f"Entries: {entry_count}", (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-    cv2.putText(frame, f"Exits: {exit_count}", (10, 60),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-    
-    cv2.imshow('People Counter', frame)
-    
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        # Draw horizontal lines on the frame
+        top_line, bottom_line = draw_lines(frame)
 
-cap.release()
-cv2.destroyAllWindows()
+        # Prepare input for the model
+        img_resized = cv2.resize(frame, INPUT_SIZE)
+        input_data = np.expand_dims(img_resized.astype(np.uint8), axis=0)
+
+        # Run inference
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
+
+        # Retrieve detection outputs
+        boxes = interpreter.get_tensor(output_details[0]['index'])[0]
+        classes = interpreter.get_tensor(output_details[1]['index'])[0]
+        scores = interpreter.get_tensor(output_details[2]['index'])[0]
+
+        detections = []
+        # Process detections and draw bounding boxes
+        for i in range(len(scores)):
+            if scores[i] > MIN_CONFIDENCE:
+                if int(classes[i]) < len(labels) and labels[int(classes[i])] == 'person':
+                    ymin, xmin, ymax, xmax = boxes[i]
+                    left = int(xmin * w)
+                    top_coord = int(ymin * h)
+                    right = int(xmax * w)
+                    bottom = int(ymax * h)
+                    cx = int((left + right) / 2)
+                    cy = int((top_coord + bottom) / 2)
+                    detections.append({
+                        "bbox": (left, top_coord, right, bottom),
+                        "centroid": (cx, cy)
+                    })
+                    cv2.rectangle(frame, (left, top_coord), (right, bottom), (0, 255, 0), 2)
+                    label_text = f"person: {scores[i]*100:.1f}%"
+                    cv2.putText(frame, label_text, (left, top_coord - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+        # Update tracking with current detections
+        tracked_objects = update_tracking(detections, tracked_objects)
+        # Check if any tracked object has crossed the lines in the defined order
+        check_crossings(tracked_objects, top_line, bottom_line)
+        # After checking crossings, update last_y for the next frame
+        for obj in tracked_objects.values():
+            obj["last_y"] = obj["centroid"][1]
+
+        # Optionally, draw tracking IDs
+        draw_tracked_objects(frame, tracked_objects)
+
+        # Display the current counter on the frame
+        cv2.putText(frame, f"Count: {counter}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+
+        cv2.imshow("Human Detection and Counting", frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+finally:
+    picam2.stop()
+    cv2.destroyAllWindows()
