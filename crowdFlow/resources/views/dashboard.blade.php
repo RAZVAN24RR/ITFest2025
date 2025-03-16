@@ -11,29 +11,67 @@
 
     <!-- Custom Styles -->
     <style>
-        /* Map container style */
+        /* Map container style: se adaugă position relative pentru a permite poziționarea absolută a elementelor deasupra */
         #map {
             height: 400px;
             width: 100%;
+            position: relative;
         }
-        /* Full-screen white loader overlay with high z-index and centered content */
+        /* Cercurile care vor apărea doar la mișcarea hărții */
+        #center-circles {
+            display: none; /* Ascuns implicit, se va afișa doar la mișcare */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            gap: 10px;
+            pointer-events: none;
+            z-index: 999; /* Asigură afișarea peste harta Leaflet */
+            /* Folosim display: flex doar când le afișăm */
+            flex-direction: row;
+        }
+        .circle {
+            width: 15px;
+            height: 15px;
+            /* Gradient de la indigo la albastru */
+            background: linear-gradient(45deg, #4F46E5, #3B82F6);
+            border-radius: 50%;
+            animation: bounce 1s infinite;
+        }
+        .circle-1 {
+            animation-delay: 0s;
+        }
+        .circle-2 {
+            animation-delay: 0.2s;
+        }
+        .circle-3 {
+            animation-delay: 0.4s;
+        }
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        /* Full-screen white loader overlay cu z-index mare și centrat */
         #global-loader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            z-index: 9999; /* higher than all components */
+            z-index: 9999;
             background-color: #ffffff;
-            display: none; /* initially hidden */
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
         }
         /* Loader spinner style */
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #2563eb; /* blue-colored spinner */
+            border-top: 4px solid #2563eb;
             border-radius: 50%;
             width: 50px;
             height: 50px;
@@ -43,7 +81,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Fade-in animation for info section */
+        /* Fade-in animation pentru secțiunea de informații */
         .fade-in {
             animation: fadeIn 500ms ease-in-out;
         }
@@ -51,7 +89,7 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        /* Particles background container */
+        /* Containerul pentru fundalul ParticleJS */
         #particles-js {
             position: fixed;
             top: 0;
@@ -62,14 +100,14 @@
         }
     </style>
 
-    <!-- Leaflet CSS and JS -->
+    <!-- Leaflet CSS și JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
 
-    <!-- jQuery (needed for dynamic content update) -->
+    <!-- jQuery (necesar pentru update dinamic) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <!-- Bootstrap (optional, for styling leaflet plugins) -->
+    <!-- Bootstrap (opțional, pentru styling suplimentar) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -77,7 +115,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
 
-    <!-- Font Awesome (for icons) -->
+    <!-- Font Awesome (pentru iconițe) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css" />
 
     <!-- Particles.js Library -->
@@ -92,7 +130,7 @@
     <div class="loader"></div>
 </div>
 
-<!-- Header: New Top Navigation Integrated with Text Logo -->
+<!-- Header: New Top Navigation Integrated cu Text Logo -->
 <header class="fixed top-0 inset-x-0" style="z-index: 1000;">
     <div class="py-3 bg-gray-900">
         <div class="container px-4 mx-auto sm:px-6 lg:px-8">
@@ -110,6 +148,7 @@
                     </a>
                 </div>
                 <div class="flex-1 max-w-xs ml-8 mr-auto">
+                    <!-- Header Search (se păstrează, după preferințe) -->
                     <label for="search" class="sr-only">Search</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -120,19 +159,21 @@
                         <input type="search" id="search" class="block w-full py-2 pl-10 text-white placeholder-gray-400 bg-gray-900 border border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Search here" />
                     </div>
                 </div>
-                <div class="flex items-center ml-4 lg:ml-0">
+                <div class="flex items-center ml-4 lg:ml-0 space-x-4">
+                    <!-- Eliminată imaginea utilizatorului; se afișează doar numele -->
                     <button type="button" class="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900" id="options-menu-button" aria-expanded="false" aria-haspopup="true">
               <span class="flex items-center justify-between w-full">
-                <span class="flex items-center justify-between min-w-0 space-x-3">
-                  <img class="flex-shrink-0 object-cover bg-gray-700 rounded-full w-7 h-7" src="https://landingfoliocom.imgix.net/store/collection/clarity-dashboard/images/horizontal-menu/2/avatar-female.png" alt="" />
-                  <span class="flex-1 hidden min-w-0 md:flex">
-                    <span class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</span>
-                  </span>
+                <span class="flex-1 hidden min-w-0 md:flex">
+                  <span class="text-sm font-medium text-white truncate">{{ Auth::user()->name }}</span>
                 </span>
-                <svg class="flex-shrink-0 w-4 h-4 ml-2 text-gray-400 group-hover:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="flex-shrink-0 w-4 h-4 ml-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </span>
+                    </button>
+                    <!-- Logout Button -->
+                    <button onclick="document.getElementById('logout-form').submit();" type="button" class="px-3 py-1 border border-red-500 text-white rounded-full hover:bg-red-500 transition-colors duration-200">
+                        Logout
                     </button>
                 </div>
             </div>
@@ -141,48 +182,34 @@
     <div class="hidden py-3 bg-gray-900 border-t border-gray-700 lg:block">
         <div class="container px-4 mx-auto sm:px-6 lg:px-8">
             <div class="flex items-center space-x-4">
-                <a href="#" title="" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-indigo-600 rounded-lg">
+                <!-- Buton gradient pentru Dashboard Free -->
+                <a href="#" title=""
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-500 rounded-md shadow-lg transform hover:scale-105 transition duration-300">
                     <svg class="w-6 h-6 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
-                    Dashboard
+                    Dashboard Free
                 </a>
-                <a href="#" title="" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-gray-900 rounded-lg hover:bg-gray-700">
-                    <svg class="w-6 h-6 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Analytics
-                    <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </a>
-                <a href="#" title="" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-gray-900 rounded-lg hover:bg-gray-700">
-                    <svg class="w-6 h-6 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                    Products
-                    <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </a>
-                <a href="#" title="" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-gray-900 rounded-lg hover:bg-gray-700">
-                    <svg class="w-6 h-6 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    Customers
-                    <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </a>
-                <a href="#" title="" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-gray-900 rounded-lg hover:bg-gray-700">
-                    <svg class="w-6 h-6 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Support
-                    <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </a>
+                <!-- Dropdown for City Selection -->
+                <div class="dropdown">
+                    <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-white transition-all duration-200 bg-gray-900 rounded-lg hover:bg-gray-700 dropdown-toggle" type="button" id="cityDropdownButton" data-bs-toggle="dropdown" aria-expanded="false">
+                        <svg class="w-6 h-6 mr-2 -ml-1 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18" />
+                        </svg>
+                        Timișoara
+                        <svg class="w-5 h-5 ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="cityDropdownButton">
+                        <li><a class="dropdown-item" href="#">Timișoara</a></li>
+                        <li><a class="dropdown-item" href="#">Bucharest</a></li>
+                        <li><a class="dropdown-item" href="#">Cluj-Napoca</a></li>
+                        <li><a class="dropdown-item" href="#">Iași</a></li>
+                        <li><a class="dropdown-item" href="#">Constanța</a></li>
+                        <li><a class="dropdown-item" href="#">Brașov</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -197,7 +224,7 @@
 <div class="pt-24">
     <div class="container mx-auto p-8">
         <div class="bg-white shadow rounded-lg p-6 mb-8 transition-all duration-500 transform hover:scale-105">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">Dashboard</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Dashboard Free</h1>
             <p class="text-gray-600">
                 This is the CrowdFlow control panel, where you can monitor crowd levels in real time at various locations.
             </p>
@@ -206,10 +233,30 @@
         <!-- Leaflet Map Section -->
         <div class="bg-white shadow rounded-lg p-6 transition-all duration-500 hover:shadow-xl">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 animate-pulse">Location: Iulius UBC 0 Haufe Group!</h2>
-            <div id="map" class="rounded-lg"></div>
-            <!-- Info Section (initially hidden, animated when shown) -->
-            <div id="info-section" class="mt-4 p-6 bg-gray-50 shadow rounded-lg transition-opacity duration-500 hidden">
-                <p id="info-content" class="text-gray-800"></p>
+            <!-- Search Bar plasat deasupra hărții -->
+            <div class="mb-4">
+                <label for="map-search" class="sr-only">Search Map</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="search" id="map-search" class="block w-full py-2 pl-10 text-gray-700 placeholder-gray-500 bg-gray-100 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Search map..." />
+                </div>
+            </div>
+            <!-- Container pentru hartă și cercurile dinamice -->
+            <div id="map" class="rounded-lg">
+                <div id="center-circles">
+                    <div class="circle circle-1"></div>
+                    <div class="circle circle-2"></div>
+                    <div class="circle circle-3"></div>
+                </div>
+            </div>
+            <!-- Secțiunea de informații -->
+            <div id="info-section" class="relative mt-4 p-6 bg-gradient-to-r from-blue-50 to-gray-50 shadow rounded-lg transition-opacity duration-500 hidden">
+                <button id="close-info" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                <div id="info-content" class="text-gray-800"></div>
             </div>
         </div>
     </div>
@@ -264,14 +311,19 @@
     </div>
 </footer>
 
-<!-- Leaflet Map Initialization with Custom Marker Colors and Info Section Update -->
+<!-- Inițializare Harta cu evenimente de mișcare pentru a gestiona apariția cercurilor -->
 <script>
-    // Ensure spinner is hidden on page refresh
+    // Ascunde spinner-ul la încărcare
     $(document).ready(function(){
         $("#global-loader").hide();
     });
 
-    // Initialize the map in the "map" element
+    // Eveniment pentru închiderea secțiunii de informații
+    $(document).on('click', '#close-info', function() {
+        $("#info-section").fadeOut(500);
+    });
+
+    // Inițializează harta în elementul "map"
     var map = L.map("map", {
         center: [45.753959, 21.225967],
         zoom: 14,
@@ -292,11 +344,21 @@
     });
     tile_layer.addTo(map);
 
+    // Evenimentele de mișcare: la începerea mișcării afișează cercurile, iar când mișcarea se oprește, le ascunde după 500ms
+    map.on('movestart', function() {
+        document.getElementById('center-circles').style.display = "flex";
+    });
+    map.on('moveend', function() {
+        setTimeout(function(){
+            document.getElementById('center-circles').style.display = "none";
+        }, 500);
+    });
+
     /**
-     * Helper function to add a marker using AwesomeMarkers.
-     * The parameter mongoId is used to fetch data from the backend via AJAX.
+     * Funcție helper pentru adăugarea unui marker folosind AwesomeMarkers.
+     * Parametrul mongoId este folosit pentru a prelua date din backend prin AJAX.
      *
-     * @param {String} mongoId - The MongoDB document ID.
+     * @param {String} mongoId - ID-ul documentului din MongoDB.
      */
     function addMarker(mongoId) {
         $.ajax({
@@ -304,7 +366,6 @@
             method: 'GET',
             dataType: 'json',
             success: function(data) {
-                // Expected data: { _id, capacity, count, description, lat, locationName, lon }
                 let locationName = data.locationName;
                 let capacity = parseFloat(data.capacity);
                 let lat = parseFloat(data.lat);
@@ -339,27 +400,35 @@
                 let coords = [lat, lon];
                 let marker = L.marker(coords, { icon: awesomeIcon }).addTo(map);
 
-                // Bind a permanent tooltip displaying the location name
                 marker.bindTooltip("<div>" + locationName + "</div>", {
                     permanent: true,
                     direction: "top",
                     offset: [0, -20]
                 });
 
-                // When the marker is clicked: show loader for 500ms, update info section, scroll to it
                 marker.on("click", function() {
-                    let content =
-                        "<h3 class='text-2xl font-bold mb-2'>" + locationName + "</h3>" +
-                        "<p class='mb-2'><strong>Description:</strong> " + description + "</p>" +
-                        "<p class='mb-2'><strong>Capacity:</strong> " + capacity + "</p>" +
-                        "<p class='mb-2'><strong>Current Count:</strong> " + count + " (" + percentage.toFixed(1) + "%)</p>" +
-                        "<div class='mt-2'><strong>Congestion Level:</strong> " +
-                        "<span class='inline-block w-4 h-4 rounded-sm mr-2' style='background-color:" + markerColor + ";'></span>" + congestionDesc + "</div>";
-
-                    // Show the full-screen white loader immediately
+                    let content = `
+              <div class="space-y-4">
+                <h3 class="text-2xl font-bold text-gray-800">${locationName}</h3>
+                <p class="text-gray-700">
+                  <span class="font-semibold">Description:</span> ${description}
+                </p>
+                <div class="flex flex-col md:flex-row md:space-x-6">
+                  <p class="text-gray-700">
+                    <span class="font-semibold">Capacity:</span> ${capacity}
+                  </p>
+                  <p class="text-gray-700">
+                    <span class="font-semibold">Current Count:</span> ${count} (<span>${percentage.toFixed(1)}%</span>)
+                  </p>
+                </div>
+                <div class="flex items-center">
+                  <span class="font-semibold text-gray-700 mr-2">Congestion Level:</span>
+                  <span class="inline-block w-4 h-4 rounded-sm mr-2" style="background-color:${markerColor};"></span>
+                  <span class="text-gray-700">${congestionDesc}</span>
+                </div>
+              </div>
+            `;
                     $("#global-loader").fadeIn(0);
-
-                    // After 500ms, hide the loader, update the info section, and scroll to it
                     setTimeout(function(){
                         $("#global-loader").fadeOut(0);
                         $("#info-content").html(content);
@@ -376,7 +445,7 @@
         });
     }
 
-    // Usage Examples:
+    // Exemple de utilizare:
     addMarker("67d60b8c6544c169f73bbd89");
     addMarker("67d56cc288ff8426b0a9d87e");
     addMarker("67d60f146544c169f73bbd8a");
@@ -392,7 +461,7 @@
     addMarker("67d614286544c169f73bbd94");
 </script>
 
-<!-- ParticlesJS Initialization -->
+<!-- Inițializare ParticlesJS -->
 <script>
     particlesJS("particles-js", {
         "particles": {

@@ -22,6 +22,11 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
 
     <style>
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
         /* Full-screen particle background */
         #particles-js {
             position: fixed;
@@ -32,7 +37,12 @@
             z-index: -1;
         }
 
-        /* Efect pulsant de glow subtil, cu gradient verde-mov, pentru buton */
+        /* Ajustare scroll pentru secțiunea "Customers" */
+        #image-slider {
+            scroll-margin-top: 100px;
+        }
+
+        /* Efect pulsant de glow subtil, cu gradient pentru buton */
         .glow-btn {
             position: relative;
             z-index: 1;
@@ -67,8 +77,8 @@
 <!-- Particle Background Container -->
 <div id="particles-js"></div>
 
-<!-- Header -->
-<header class="bg-gray-900 border-b border-gray-700 mb-8">
+<!-- Sticky Header -->
+<header class="sticky top-0 bg-gray-900 border-b border-gray-700 mb-8 z-50">
     <div class="container px-4 mx-auto sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Left side: Logo and Navigation -->
@@ -85,22 +95,22 @@
                 <div class="flex items-center ml-8">
                     <span class="text-white text-xl font-bold">CrowdFlow</span>
                     <div class="hidden sm:flex space-x-10 ml-8">
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-white transition-all duration-200 border-b-2 border-white">Welcome</a>
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-400 transition-all duration-200 border-b-2 border-transparent hover:border-gray-200 hover:text-white">Products</a>
-                        <a href="#" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-400 transition-all duration-200 border-b-2 border-transparent hover:border-gray-200 hover:text-white">Customers</a>
+                        <a href="#welcome" id="nav-welcome" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-white transition-all duration-200 border-b-2 border-white">Welcome</a>
+                        <a href="#image-slider" id="nav-customers" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-400 transition-all duration-200 border-b-2 border-transparent hover:border-gray-200 hover:text-white">Customers</a>
+                        <a href="#explanation" id="nav-products" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-400 transition-all duration-200 border-b-2 border-transparent hover:border-gray-200 hover:text-white">Products</a>
                     </div>
                 </div>
             </div>
             <!-- Right side: Buttons -->
-            <div class="flex items-center space-x-4">
-                <!-- Sign In button (outline) -->
-                <a href="#"
-                   class="inline-flex items-center px-4 py-2 border border-white text-white rounded-md hover:bg-gray-800 transition-colors duration-200">
+            <div class="flex items-center space-x-2">
+                <!-- Butonul Sign In -->
+                <a href="{{ route('login.google') }}"
+                   class="inline-flex items-center px-3 py-1.5 text-sm border border-white text-white rounded-md hover:bg-gray-800 transition-colors duration-200">
                     Sign In
                 </a>
-                <!-- PRO button (filled) -->
-                <a href="#"
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200">
+                <!-- Butonul PRO cu gradient; redirecționează la Stripe -->
+                <a href="{{ route('stripe.checkout') }}"
+                   class="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-md shadow-lg transform hover:scale-105 transition duration-300">
                     PRO
                 </a>
             </div>
@@ -108,8 +118,8 @@
     </div>
 </header>
 
-<!-- Main Section -->
-<section class="py-12 bg-white sm:py-16 lg:py-20 xl:py-20 relative z-10 mb-8">
+<!-- Main Section (Welcome) -->
+<section id="welcome" class="py-12 bg-white sm:py-16 lg:py-20 xl:py-20 relative z-10 mb-8">
     <div class="px-4 mx-auto sm:px-6 lg:px-8 max-w-7xl">
         <div class="grid items-center grid-cols-1 gap-y-12 lg:grid-cols-2 lg:gap-x-16 xl:gap-x-24">
             <!-- Image Column (illustrative in this example) -->
@@ -120,9 +130,13 @@
             </div>
             <!-- Content Column -->
             <div class="lg:order-1">
-                <h2 class="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
-                    CrowdFlow – Real-Time Crowd Detection
-                </h2>
+                <!-- Container pentru titlu cu efect de gradient radial subtil și colțuri rotunjite -->
+                <div class="relative inline-block">
+                    <span class="absolute -z-10 rounded-md" style="top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at left center, rgba(79,70,229,0.15), rgba(59,130,246,0) 100%);"></span>
+                    <h2 class="relative text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+                        CrowdFlow – Real-Time Crowd Detection
+                    </h2>
+                </div>
                 <p class="mt-4 text-base font-normal leading-7 text-gray-600 lg:text-lg lg:mt-6 lg:leading-8">
                     CrowdFlow is a revolutionary application that detects the presence of people in real time at various locations, enabling you to make the best decisions for your day.
                 </p>
@@ -132,7 +146,7 @@
                     <div class="flex flex-col">
                         <div class="flex items-center">
                             <svg class="w-6 h-6 text-blue-600 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                             </svg>
                             <span class="text-lg font-medium text-gray-800 ml-2.5">Real-time Tracking</span>
                         </div>
@@ -141,43 +155,19 @@
                     <!-- Exact Number of People -->
                     <div class="flex items-center">
                         <svg class="w-6 h-6 text-blue-600 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         <span class="text-lg font-medium text-gray-800 ml-2.5">Exact Number of People</span>
                     </div>
                     <!-- Location-based Information -->
                     <div class="flex items-center">
                         <svg class="w-6 h-6 text-blue-600 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zM13.707 8.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
                         <span class="text-lg font-medium text-gray-800 ml-2.5">Location-based Information</span>
                     </div>
                 </div>
-                <!-- Crowd Codes Legend -->
-                <div class="mt-8">
-                    <div class="bg-gray-100 rounded-lg p-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Crowd Codes Legend</h3>
-                        <div class="flex space-x-4">
-                            <div class="flex items-center space-x-2">
-                                <span class="block w-4 h-4 bg-green-500 rounded"></span>
-                                <span class="text-sm text-gray-700">Not crowded</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="block w-4 h-4 bg-yellow-500 rounded"></span>
-                                <span class="text-sm text-gray-700">Slightly crowded</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="block w-4 h-4 bg-orange-500 rounded"></span>
-                                <span class="text-sm text-gray-700">Crowded</span>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="block w-4 h-4 bg-red-500 rounded"></span>
-                                <span class="text-sm text-gray-700">Very crowded</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Buttons: "Continue with Google" & Analytics -->
+                <!-- Butoane: "Continue with Google" & Analytics -->
                 <div class="flex justify-start mt-8 space-x-4">
                     <a href="{{ route('login.google') }}"
                        class="flex items-center justify-center border border-gray-300 rounded-md py-3 px-5 text-lg font-medium text-gray-700 hover:bg-gray-50">
@@ -189,7 +179,8 @@
                         </svg>
                         Continue with Google
                     </a>
-                    <a href="#"
+                    <!-- Butonul Analytics; redirecționează la Stripe -->
+                    <a href="{{ route('stripe.checkout') }}"
                        class="glow-btn flex items-center justify-center bg-green-600 text-white rounded-md py-3 px-5 text-lg font-medium hover:bg-green-700 transition-colors duration-200">
                         $15/month for Analytics
                     </a>
@@ -199,7 +190,7 @@
     </div>
 </section>
 
-<!-- Image Slider -->
+<!-- Image Slider Section (destinația pentru link-ul "Customers") -->
 <section id="image-slider" class="py-8 bg-white relative z-10 mb-8">
     <div class="container mx-auto px-4">
         <div class="swiper mySwiper">
@@ -250,6 +241,45 @@
                     <img src="images/slider15.jpg" alt="Slide 15" class="h-24 object-contain rounded" />
                 </div>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Secțiune "Our Offer" Îmbunătățită -->
+<section id="explanation" class="py-12 bg-white sm:py-16 lg:py-20 xl:py-20 relative z-10 mb-8">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-gray-900 text-center mb-12 uppercase tracking-wide">Why Choose CrowdFlow?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <!-- Card 1: Free Real-Time Updates -->
+            <div class="p-6 bg-white rounded-lg shadow-lg transform transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+                <div class="flex flex-col items-center text-center">
+                    <svg class="w-16 h-16 text-green-500 mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-2">Free Real-Time Updates</h3>
+                    <p class="text-base text-gray-600">
+                        Continue with Google to get immediate, accurate updates on crowd levels at your favorite locations.
+                    </p>
+                </div>
+            </div>
+            <!-- Card 2: Unlock Advanced Analytics -->
+            <div class="p-6 bg-white rounded-lg shadow-lg transform transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+                <div class="flex flex-col items-center text-center">
+                    <svg class="w-16 h-16 text-indigo-600 mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1 1 0 01.2 1.3l-2.3 3.9a1 1 0 01-1.5.3l-2.7-2a1 1 0 00-1.1 0l-2.7 2a1 1 0 01-1.5-.3l-2.3-3.9a1 1 0 01.2-1.3l2.1-2.4a1 1 0 000-1.4L4.6 9.1a1 1 0 01-.2-1.3l2.3-3.9a1 1 0 011.5-.3l2.7 2a1 1 0 001.1 0l2.7-2a1 1 0 011.5.3l2.3 3.9a1 1 0 01-.2 1.3l-2.1 2.4a1 1 0 000 1.4l2.1 2.4z"></path>
+                    </svg>
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-2">Unlock Advanced Analytics</h3>
+                    <p class="text-base text-gray-600">
+                        Upgrade to our premium plan and get access to detailed dashboard analytics and AI-powered predictions.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-12 flex justify-center">
+            <a href="{{ route('stripe.checkout') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 text-white text-lg font-medium rounded-md shadow-lg transform hover:scale-105 transition duration-300">
+                Learn More
+            </a>
         </div>
     </div>
 </section>
@@ -427,6 +457,22 @@
             }
         },
         "retina_detect": true
+    });
+</script>
+
+<!-- Script pentru activarea stilului la navigare -->
+<script>
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function() {
+            // Șterge stilurile active pentru toate link-urile
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('border-white', 'text-white');
+                el.classList.add('border-transparent', 'text-gray-400');
+            });
+            // Adaugă stilurile active link-ului care a fost click-uit
+            this.classList.remove('border-transparent', 'text-gray-400');
+            this.classList.add('border-white', 'text-white');
+        });
     });
 </script>
 </body>

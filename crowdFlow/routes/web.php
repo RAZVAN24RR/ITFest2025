@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\StripeController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -25,3 +26,14 @@ Route::post('/logout', function () {
 })->name('logout');
 
 Route::get('/locations/{id}', [LocationController::class, 'show']);
+
+Route::get('/stripe/checkout', [StripeController::class, 'checkout'])->name('stripe.checkout');
+
+// Rute pentru redirecționările după plată (poți personaliza textul sau pagina)
+Route::get('/checkout/success', function () {
+    return 'Payment Success';
+})->name('checkout.success');
+
+Route::get('/checkout/cancel', function () {
+    return 'Payment Cancelled';
+})->name('checkout.cancel');
