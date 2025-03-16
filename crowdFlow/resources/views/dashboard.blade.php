@@ -11,13 +11,13 @@
 
     <!-- Custom Styles -->
     <style>
-        /* Map container style: se adaugă position relative pentru a permite poziționarea absolută a elementelor deasupra */
+        /* Map container: poziție relativă pentru a permite plasarea elementelor deasupra */
         #map {
             height: 400px;
             width: 100%;
             position: relative;
         }
-        /* Cercurile care vor apărea doar la mișcarea hărții */
+        /* Cercurile de centru, care vor apărea doar la mișcarea hărții */
         #center-circles {
             display: none; /* Ascuns implicit, se va afișa doar la mișcare */
             position: absolute;
@@ -26,8 +26,7 @@
             transform: translate(-50%, -50%);
             gap: 10px;
             pointer-events: none;
-            z-index: 999; /* Asigură afișarea peste harta Leaflet */
-            /* Folosim display: flex doar când le afișăm */
+            z-index: 999; /* Se afișează deasupra hărții */
             flex-direction: row;
         }
         .circle {
@@ -55,7 +54,7 @@
                 transform: translateY(-10px);
             }
         }
-        /* Full-screen white loader overlay cu z-index mare și centrat */
+        /* Loader global centrat cu display: flex */
         #global-loader {
             position: fixed;
             top: 0;
@@ -68,7 +67,6 @@
             justify-content: center;
             align-items: center;
         }
-        /* Loader spinner style */
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #2563eb;
@@ -81,7 +79,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Fade-in animation pentru secțiunea de informații */
+        /* Animație fade-in pentru secțiunea de informații */
         .fade-in {
             animation: fadeIn 500ms ease-in-out;
         }
@@ -89,7 +87,22 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        /* Containerul pentru fundalul ParticleJS */
+        /* Efectul de glow pentru butonul "get PRO" */
+        .glow-pulse {
+            animation: pulseGlow 5s infinite;
+        }
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 8px 4px rgba(22, 163, 74, 0.5);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
+            }
+        }
+        /* Container ParticlesJS */
         #particles-js {
             position: fixed;
             top: 0;
@@ -104,10 +117,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
 
-    <!-- jQuery (necesar pentru update dinamic) -->
+    <!-- jQuery (pentru update dinamic) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <!-- Bootstrap (opțional, pentru styling suplimentar) -->
+    <!-- Bootstrap (opțional pentru styling suplimentar) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -122,15 +135,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
 </head>
 <body class="bg-white relative">
-<!-- Particles Background Container -->
+<!-- Particles Background -->
 <div id="particles-js"></div>
 
-<!-- Global Loader Overlay -->
+<!-- Loader Global -->
 <div id="global-loader">
     <div class="loader"></div>
 </div>
 
-<!-- Header: New Top Navigation Integrated cu Text Logo -->
+<!-- Header -->
 <header class="fixed top-0 inset-x-0" style="z-index: 1000;">
     <div class="py-3 bg-gray-900">
         <div class="container px-4 mx-auto sm:px-6 lg:px-8">
@@ -148,7 +161,7 @@
                     </a>
                 </div>
                 <div class="flex-1 max-w-xs ml-8 mr-auto">
-                    <!-- Header Search (se păstrează, după preferințe) -->
+                    <!-- Header Search -->
                     <label for="search" class="sr-only">Search</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -160,7 +173,12 @@
                     </div>
                 </div>
                 <div class="flex items-center ml-4 lg:ml-0 space-x-4">
-                    <!-- Eliminată imaginea utilizatorului; se afișează doar numele -->
+                    <!-- Butonul Get PRO cu efect de glow, mai mic, plasat la stânga numelui -->
+                    <a href="{{ route('stripe.checkout') }}"
+                       class="glow-btn glow-pulse flex items-center justify-center bg-green-600 text-white rounded-md py-1 px-3 text-sm font-medium hover:bg-green-700 transition-colors duration-200">
+                        get PRO
+                    </a>
+                    <!-- Dropdown nume utilizator -->
                     <button type="button" class="rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900" id="options-menu-button" aria-expanded="false" aria-haspopup="true">
               <span class="flex items-center justify-between w-full">
                 <span class="flex-1 hidden min-w-0 md:flex">
@@ -182,7 +200,7 @@
     <div class="hidden py-3 bg-gray-900 border-t border-gray-700 lg:block">
         <div class="container px-4 mx-auto sm:px-6 lg:px-8">
             <div class="flex items-center space-x-4">
-                <!-- Buton gradient pentru Dashboard Free -->
+                <!-- Butonul Dashboard Free cu gradient -->
                 <a href="#" title=""
                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-500 rounded-md shadow-lg transform hover:scale-105 transition duration-300">
                     <svg class="w-6 h-6 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -203,11 +221,21 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="cityDropdownButton">
                         <li><a class="dropdown-item" href="#">Timișoara</a></li>
-                        <li><a class="dropdown-item" href="#">Bucharest</a></li>
-                        <li><a class="dropdown-item" href="#">Cluj-Napoca</a></li>
-                        <li><a class="dropdown-item" href="#">Iași</a></li>
-                        <li><a class="dropdown-item" href="#">Constanța</a></li>
-                        <li><a class="dropdown-item" href="#">Brașov</a></li>
+                        <li>
+                            <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Bucharest</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Cluj-Napoca</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Iași</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Constanța</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Brașov</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -245,7 +273,7 @@
                     <input type="search" id="map-search" class="block w-full py-2 pl-10 text-gray-700 placeholder-gray-500 bg-gray-100 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Search map..." />
                 </div>
             </div>
-            <!-- Container pentru hartă și cercurile dinamice -->
+            <!-- Harta și cercurile dinamice -->
             <div id="map" class="rounded-lg">
                 <div id="center-circles">
                     <div class="circle circle-1"></div>
@@ -311,19 +339,19 @@
     </div>
 </footer>
 
-<!-- Inițializare Harta cu evenimente de mișcare pentru a gestiona apariția cercurilor -->
+<!-- Inițializare Harta și controlul evenimentelor pentru cercuri -->
 <script>
-    // Ascunde spinner-ul la încărcare
+    // Ascunde loader-ul la inițializare
     $(document).ready(function(){
         $("#global-loader").hide();
     });
 
-    // Eveniment pentru închiderea secțiunii de informații
+    // Eveniment de închidere a secțiunii de informații
     $(document).on('click', '#close-info', function() {
         $("#info-section").fadeOut(500);
     });
 
-    // Inițializează harta în elementul "map"
+    // Inițializează harta
     var map = L.map("map", {
         center: [45.753959, 21.225967],
         zoom: 14,
@@ -344,7 +372,7 @@
     });
     tile_layer.addTo(map);
 
-    // Evenimentele de mișcare: la începerea mișcării afișează cercurile, iar când mișcarea se oprește, le ascunde după 500ms
+    // Evenimente de mișcare a hărții: la începutul mișcării afișează cercurile, apoi le ascunde după 500ms când mișcarea se oprește
     map.on('movestart', function() {
         document.getElementById('center-circles').style.display = "flex";
     });
@@ -356,9 +384,7 @@
 
     /**
      * Funcție helper pentru adăugarea unui marker folosind AwesomeMarkers.
-     * Parametrul mongoId este folosit pentru a prelua date din backend prin AJAX.
-     *
-     * @param {String} mongoId - ID-ul documentului din MongoDB.
+     * Parametrul mongoId este folosit pentru preluarea datelor din backend prin AJAX.
      */
     function addMarker(mongoId) {
         $.ajax({
@@ -428,7 +454,8 @@
                 </div>
               </div>
             `;
-                    $("#global-loader").fadeIn(0);
+                    // Folosim .css("display", "flex") pentru ca loader-ul să rămână centrat
+                    $("#global-loader").css("display", "flex");
                     setTimeout(function(){
                         $("#global-loader").fadeOut(0);
                         $("#info-content").html(content);

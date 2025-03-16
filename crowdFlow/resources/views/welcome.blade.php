@@ -150,7 +150,7 @@
                             </svg>
                             <span class="text-lg font-medium text-gray-800 ml-2.5">Real-time Tracking</span>
                         </div>
-                        <span class="ml-10 text-sm text-blue-500">34 people</span>
+{{--                        <span class="ml-10 text-sm text-blue-500">34 people</span>--}}
                     </div>
                     <!-- Exact Number of People -->
                     <div class="flex items-center">
