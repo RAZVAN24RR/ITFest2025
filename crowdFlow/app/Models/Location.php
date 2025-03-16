@@ -15,5 +15,9 @@ class Location extends Model
         '_id',
         'capacity',
         'count',
+        'description',
+        'lat',
+        'locationName',
+        'lon'
     ];
 }

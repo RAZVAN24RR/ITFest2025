@@ -46,7 +46,13 @@
             </div>
             <div class="flex items-center space-x-4">
                 <span class="hidden sm:block text-gray-700">Welcome, {{ Auth::user()->name }}!</span>
-                <a href="{{ route('logout') }}" class="text-red-500 hover:text-red-700 font-medium">Logout</a>
+                <!-- Logout link using POST by submitting a hidden form -->
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="text-red-500 hover:text-red-700 font-medium">
+                    Logout
+                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
             </div>
         </div>
     </div>
@@ -66,7 +72,7 @@
         <div class="bg-white shadow rounded-lg p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-4">Location: Iulius UBC 0 Haufe Group!</h2>
             <div id="map"></div>
-            <!-- Info Section: Ascuns inițial, se afișează la click -->
+            <!-- Info Section (initially hidden, shown upon marker click) -->
             <div id="info-section" class="mt-4 p-6 bg-gray-50 shadow rounded-lg" style="display:none;">
                 <p id="info-content" class="text-gray-800"></p>
             </div>
@@ -125,7 +131,7 @@
 
 <!-- Leaflet Map Initialization with Custom Marker Colors and Info Section Update -->
 <script>
-    // Inițializare harta în elementul "map"
+    // Initialize the map in the "map" element
     var map = L.map("map", {
         center: [45.753959, 21.225967],
         zoom: 14,
@@ -134,7 +140,7 @@
         crs: L.CRS.EPSG3857
     });
 
-    // Adăugare strat de plăcuțe de la CARTO (temă light)
+    // Add tile layer from CARTO (light theme)
     var tile_layer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         minZoom: 0,
         maxZoom: 20,
@@ -149,100 +155,99 @@
     tile_layer.addTo(map);
 
     /**
-     * Funcție helper pentru adăugarea unui marker folosind AwesomeMarkers.
-     * Parametrul suplimentar mongoId (opțional) este folosit pentru a face o cerere AJAX
-     * la endpoint-ul backend-ului pentru a prelua detalii din MongoDB.
+     * Helper function to add a marker using AwesomeMarkers.
+     * The optional parameter mongoId is used to make an AJAX request
+     * to the backend endpoint for fetching details from MongoDB.
      *
-     * @param {Array} coords - [lat, lng]
-     * @param {String} infoText - Textul informativ pentru secțiunea de sub hartă
-     * @param {String} tooltipText - Numele locației, afișat permanent deasupra markerului
-     * @param {String} statusColor - Culoarea markerului (ex.: "red", "yellow", "orange", "green")
-     * @param {String|null} mongoId - (Opțional) Id-ul folosit pentru preluarea datelor din MongoDB
+     * @param {String} mongoId - The MongoDB document ID.
      */
-    function addMarker(coords, infoText, tooltipText, statusColor, mongoId = null) {
-        var awesomeIcon = L.AwesomeMarkers.icon({
-            markerColor: statusColor,
-            iconColor: "white",
-            icon: "info-sign",
-            prefix: "glyphicon",
-            extraClasses: "fa-rotate-0"
-        });
-        var marker = L.marker(coords, { icon: awesomeIcon }).addTo(map);
+    function addMarker(mongoId) {
+        $.ajax({
+            url: '/locations/' + mongoId,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                // Expected data object properties:
+                // { _id, capacity, count, description, lat, locationName, lon }
+                let locationName = data.locationName;
+                let capacity = parseFloat(data.capacity);
+                let lat = parseFloat(data.lat);
+                let lon = parseFloat(data.lon);
+                let description = data.description;
+                let count = data.count;
+                let percentage = (count / capacity) * 100;
+                let markerColor, congestionDesc;
 
-        // Tooltip permanent, poziționat deasupra markerului
-        marker.bindTooltip("<div>" + tooltipText + "</div>", {
-            permanent: true,
-            direction: "top",
-            offset: [0, -20]
-        });
-
-        // La click, dacă mongoId este specificat, se face o cerere AJAX către API,
-        // altfel se afișează textul static și nivelul de aglomerație.
-        marker.on("click", function() {
-            if (mongoId) {
-                $.ajax({
-                    url: '/locations/' + mongoId,
-                    method: 'GET',
-                    dataType: 'json',
-                    success: function(data) {
-                        // Răspunsul de la MongoDB se așteaptă sub forma:
-                        // { "_id": "...", "capacity": 54, "count": 10 }
-                        var content = "<h3>" + tooltipText + "</h3>" +
-                            "<p><strong>ID:</strong> " + data._id + "</p>" +
-                            "<p><strong>Capacitate:</strong> " + data.capacity + "</p>" +
-                            "<p><strong>Număr curent:</strong> " + data.count + "</p>";
-                        $("#info-content").html(content);
-                        $("#info-section").show();
-                    },
-                    error: function(err) {
-                        console.error("Eroare la preluarea datelor:", err);
-                        $("#info-content").html("Nu s-au putut prelua datele din MongoDB.");
-                        $("#info-section").show();
-                    }
-                });
-            } else {
-                var statusDesc = "";
-                if (statusColor === "green") {
-                    statusDesc = "Verde - nu este aglomerat";
-                } else if (statusColor === "yellow") {
-                    statusDesc = "Galben - puțin aglomerat";
-                } else if (statusColor === "orange") {
-                    statusDesc = "Portocaliu - aglomerat";
-                } else if (statusColor === "red") {
-                    statusDesc = "Roșu - Foarte aglomerat";
+                if (percentage < 40) {
+                    markerColor = "green";
+                    congestionDesc = "Green - Not crowded";
+                } else if (percentage < 50) {
+                    markerColor = "yellow";
+                    congestionDesc = "Yellow - Slightly crowded";
+                } else if (percentage < 75) {
+                    markerColor = "orange";
+                    congestionDesc = "Orange - Crowded";
+                } else {
+                    markerColor = "red";
+                    congestionDesc = "Red - Very crowded";
                 }
-                var levelHTML = "<div style='margin-top:5px;'><strong>Nivel Aglomeratie:</strong> " +
-                    "<span style='display:inline-block; width:15px; height:15px; background-color:" + statusColor +
-                    "; margin:0 5px; vertical-align:middle;'></span>" + statusDesc + "</div>";
-                var content = infoText + levelHTML;
-                $("#info-content").html(content);
+
+                // Create the awesome marker icon with the computed marker color
+                let awesomeIcon = L.AwesomeMarkers.icon({
+                    markerColor: markerColor,
+                    iconColor: "white",
+                    icon: "info-sign",
+                    prefix: "glyphicon",
+                    extraClasses: "fa-rotate-0"
+                });
+
+                let coords = [lat, lon];
+                let marker = L.marker(coords, { icon: awesomeIcon }).addTo(map);
+
+                // Bind a permanent tooltip displaying the location name
+                marker.bindTooltip("<div>" + locationName + "</div>", {
+                    permanent: true,
+                    direction: "top",
+                    offset: [0, -20]
+                });
+
+                // On marker click, update the info section with details
+                marker.on("click", function() {
+                    let content =
+                        "<h3>" + locationName + "</h3>" +
+                        "<p><strong>Description:</strong> " + description + "</p>" +
+                        "<p><strong>Capacity:</strong> " + capacity + "</p>" +
+                        "<p><strong>Current Count:</strong> " + count + " (" + percentage.toFixed(1) + "%)</p>" +
+                        "<div style='margin-top:5px;'><strong>Congestion Level:</strong> " +
+                        "<span style='display:inline-block; width:15px; height:15px; background-color:" + markerColor +
+                        "; margin:0 5px; vertical-align:middle;'></span>" + congestionDesc + "</div>";
+
+                    $("#info-content").html(content);
+                    $("#info-section").show();
+                });
+            },
+            error: function(err) {
+                console.error("Error fetching location data:", err);
+                $("#info-content").html("Failed to load location data from MongoDB.");
                 $("#info-section").show();
             }
         });
-        return marker;
     }
 
-    // Adăugare marker pentru "Haufe Group" cu id-ul MongoDB hardcodat
-    addMarker(
-        [45.765629, 21.230695],
-        "Informații despre Haufe Group.",
-        "Haufe Group",
-        "red",
-        "67d56cc288ff8426b0a9d87e"
-    );
-
-    // Adăugare markeri pentru celelalte locații (fără AJAX specific)
-    addMarker([45.74895, 21.23951], "Informații despre GymOne 3.", "GymOne 3", "green");
-    addMarker([45.707757, 21.232807], "Informații despre Lidl.", "Lidl", "yellow");
-    addMarker([45.753986, 21.249482], "Informații despre Curtea Berarilor La Fabrica.", "Curtea Berarilor La Fabrica", "orange");
-    addMarker([45.757099, 21.227967], "Informații despre Jack's Bistro.", "Jack's Bistro", "red");
-    addMarker([45.73716, 21.24157], "Informații despre Spitalul Clinic Județean de Urgență.", "Spitalul Clinic Județean de Urgență", "green");
-    addMarker([45.755422, 21.233204], "Informații despre Hotel Continental.", "Hotel Continental", "orange");
-    addMarker([45.73716, 21.219815], "Informații despre Kaufland.", "Kaufland", "green");
-    addMarker([45.766586, 21.236062], "Informații despre Dedeman.", "Dedeman", "yellow");
-    addMarker([45.755225, 21.227778], "Informații despre La Focacceria.", "La Focaccerias", "orange");
-    addMarker([45.757842, 21.229859], "Informații despre Pepper - Steak & Shake.", "Pepper - Steak & Shake", "red");
-    addMarker([45.754119, 21.225484], "Informații despre Starbucks.", "Starbucks", "green");
+    // Usage Example:
+    addMarker("67d60b8c6544c169f73bbd89");
+    addMarker("67d56cc288ff8426b0a9d87e");
+    addMarker("67d60f146544c169f73bbd8a");
+    addMarker("67d6111c6544c169f73bbd8b");
+    addMarker("67d611786544c169f73bbd8c");
+    addMarker("67d611de6544c169f73bbd8d");
+    addMarker("67d612496544c169f73bbd8e");
+    addMarker("67d6129a6544c169f73bbd8f");
+    addMarker("67d613166544c169f73bbd90");
+    addMarker("67d6135a6544c169f73bbd91");
+    addMarker("67d613a16544c169f73bbd92");
+    addMarker("67d613df6544c169f73bbd93");
+    addMarker("67d614286544c169f73bbd94");
 </script>
 </body>
 </html>
