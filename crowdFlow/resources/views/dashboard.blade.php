@@ -260,7 +260,7 @@
 
         <!-- Leaflet Map Section -->
         <div class="bg-white shadow rounded-lg p-6 transition-all duration-500 hover:shadow-xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 animate-pulse">Location: Iulius UBC 0 Haufe Group!</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 animate-pulse">TEST Location: Iulius UBC 0 Haufe Group!</h2>
             <!-- Search Bar plasat deasupra hărții -->
             <div class="mb-4">
                 <label for="map-search" class="sr-only">Search Map</label>

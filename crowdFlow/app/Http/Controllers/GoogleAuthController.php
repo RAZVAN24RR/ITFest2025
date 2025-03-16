@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class GoogleAuthController extends Controller
 {
@@ -26,27 +26,32 @@ class GoogleAuthController extends Controller
             // Folosim stateless pentru a evita problemele legate de sesiune
             $googleUser = Socialite::driver('google')->stateless()->user();
         } catch (\Exception $e) {
-            // În caz de eroare, redirecționează înapoi cu un mesaj de eroare
-            return redirect()->route('login')->with('error', 'A apărut o problemă la autentificare, te rugăm să încerci din nou!');
+            // În caz de eroare, redirecționăm către '/' cu mesaj de eroare
+            return redirect('/')->with('error', 'A apărut o problemă la autentificare, te rugăm să încerci din nou!');
         }
 
-        // Căutăm utilizatorul după adresa de email
-        $user = User::where('email', $googleUser->getEmail())->first();
+        // Caută utilizatorul după google_id
+        $user = User::where('google_id', $googleUser->getId())->first();
 
-        // Dacă utilizatorul nu există, îl creăm
+        // Dacă utilizatorul nu există, creăm unul cu numele și google_id-ul, setând expirationPRO la 1 ianuarie 2024
         if (!$user) {
             $user = User::create([
-                'name'     => $googleUser->getName() ?? $googleUser->getNickname(),
-                'email'    => $googleUser->getEmail(),
-                // Deoarece se va conecta cu Google, putem seta o parolă aleatorie
-                'password' => bcrypt(Str::random(16)),
+                'name'          => $googleUser->getName() ?: $googleUser->getNickname(),
+                'google_id'     => $googleUser->getId(),
+                'expirationPRO' => Carbon::create(2024, 1, 1, 0, 0, 0)
             ]);
         }
 
-        // Conectăm utilizatorul și ne asigurăm că sesiunea este salvată
+        // Autentificăm utilizatorul
         Auth::login($user, true);
 
-        // Redirecționăm utilizatorul către dashboard sau pagina dorită
+        // Verificăm dacă este setat flag-ul de plată reușită în sesiune și activăm abonamentul PRO
+        if (session('payment_success')) {
+            $user->activateProSubscription();
+            session()->forget('payment_success');
+        }
+
+        // Redirecționează utilizatorul către dashboard
         return redirect()->intended('/dashboard');
     }
 }
